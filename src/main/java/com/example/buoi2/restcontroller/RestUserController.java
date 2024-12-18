@@ -10,6 +10,7 @@ import com.example.buoi2.utils.ApiResponse;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class RestUserController {
 
     // Lấy danh sách tất cả User
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ApiResponse<List<UserResponse>> getUsers() {
         List<User> users = userService.getAllUsers();
 
@@ -46,6 +48,7 @@ public class RestUserController {
 
     // Lấy thông tin chi tiết của 1 User theo ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ApiResponse<UserResponse> getUserById(@PathVariable Long id) {
         User user = userService.getUserById(id);
 
@@ -67,6 +70,7 @@ public class RestUserController {
 
     // Tạo mới User
     @PostMapping("/create")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ApiResponse<UserResponse> createUser(@RequestBody UserRequest userRequest) {
         User createdUser = userService.createUser(userRequest);
 
@@ -86,6 +90,7 @@ public class RestUserController {
 
     // Cập nhật User theo ID
     @PutMapping("/update/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ApiResponse<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserRequest userRequest) {
         // Tạo đối tượng User từ UserRequest
         User userToUpdate = new User();
@@ -130,6 +135,7 @@ public class RestUserController {
 
     // Xóa User theo ID
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ApiResponse<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return new ApiResponse<>("User deleted successfully", 200);

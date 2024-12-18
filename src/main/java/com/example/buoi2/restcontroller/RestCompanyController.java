@@ -5,6 +5,7 @@ import com.example.buoi2.response.CompanyResponse;
 import com.example.buoi2.services.CompanyService;
 import com.example.buoi2.utils.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class RestCompanyController {
 
     // Lấy danh sách tất cả Company
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<List<CompanyResponse>> getAllCompanies() {
         List<Company> companies = companyService.getAllCompany();
 
@@ -34,6 +36,7 @@ public class RestCompanyController {
 
     // Lấy thông tin chi tiết của 1 Company theo ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<CompanyResponse> getCompanyById(@PathVariable Long id) {
         Company company = companyService.getCompanyById(id);
 
@@ -52,6 +55,7 @@ public class RestCompanyController {
 
     // Tạo mới Company
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<CompanyResponse> createCompany(@RequestBody Company company) {
         Company createdCompany = companyService.createCompany(company);
 
@@ -66,6 +70,7 @@ public class RestCompanyController {
 
     // Cập nhật Company theo ID
     @PutMapping("/update/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<CompanyResponse> updateCompany(@PathVariable Long id, @RequestBody Company company) {
         Company updatedCompany = companyService.updateCompany(id, company);
 
@@ -80,6 +85,7 @@ public class RestCompanyController {
 
     // Xóa Company theo ID
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Void> deleteCompany(@PathVariable Long id) {
         companyService.deleteCompany(id);
         return new ApiResponse<>("Company deleted successfully", 200);

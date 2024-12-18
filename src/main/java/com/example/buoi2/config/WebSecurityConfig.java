@@ -1,25 +1,32 @@
 package com.example.buoi2.config;
 
+import com.example.buoi2.filter.JwtAuthFilter;
 import com.example.buoi2.sercurity.UserDetailsServiceIml;
+import com.example.buoi2.utils.CustomAccessDeniedHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig {
 
-    private final UserDetailsServiceIml userDetailsService;
+    @Autowired
+    private JwtAuthFilter authFilter;
 
-    public WebSecurityConfig(UserDetailsServiceIml userDetailsService) {
-        this.userDetailsService = userDetailsService;
-    }
+    @Autowired
+    private UserDetailsServiceIml userDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -27,36 +34,28 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-        AuthenticationManagerBuilder builder = http.getSharedObject(AuthenticationManagerBuilder.class);
-        builder
+    public AuthenticationManager authManager(HttpSecurity http) throws Exception {
+        AuthenticationManagerBuilder authenticationManagerBuilder =
+                http.getSharedObject(AuthenticationManagerBuilder.class);
+        authenticationManagerBuilder
                 .userDetailsService(userDetailsService)
                 .passwordEncoder(passwordEncoder());
-        return builder.build();
+        return authenticationManagerBuilder.build();
     }
 
-
     @Bean
-    protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    protected SecurityFilterChain filterChain(HttpSecurity http, CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
-                .authorizeHttpRequests(request -> request
-                        .requestMatchers("/", "/register", "/h2-console/**").permitAll()
-                        .requestMatchers("/user/add").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/user/list", true) // Chuyển hướng sau khi login thành công
-                        .failureUrl("/login?error=true") // Chuyển hướng khi login thất bại
-                        .permitAll()
-                )
-                .logout(config -> config
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout=true")
-                        .permitAll()
+//                    .authorizeHttpRequests(request -> request
+//                            .requestMatchers("/register", "/api/auth/generateToken", "/api/auth/register", "/h2-console/**").permitAll()
+//                            .anyRequest().authenticated()
+//                    )
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class) // Thêm JwtAuthFilter trước UsernamePasswordAuthenticationFilter
+                .exceptionHandling(exceptionHandling ->
+                        exceptionHandling.accessDeniedHandler(customAccessDeniedHandler) // Register CustomAccessDeniedHandler
                 )
                 .build();
     }
